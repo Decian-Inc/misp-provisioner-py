@@ -92,10 +92,10 @@ class MispBrowserClient:
 					print(f"[wait] attempt={attempt} status={resp.status_code}")
 				if resp.status_code == 200:
 					return True
-			except requests.RequestException:
-				if debug:
-					print(f"[wait] attempt={attempt} exception during request")
-				pass
+		except requests.RequestException as e:
+			if debug:
+				print(f"[wait] attempt={attempt} exception during request: {e.__class__.__name__}: {e}")
+			pass
 			time.sleep(interval_seconds)
 
 	def api_get_feeds(self, api_key: str, debug: bool = False) -> list:
