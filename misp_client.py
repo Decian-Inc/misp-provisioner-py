@@ -306,14 +306,35 @@ class MispBrowserClient:
 
 	def _get(self, path: str, **kwargs) -> requests.Response:
 		url = f"{self.base_url}/{path.lstrip('/')}"
-		return self.session.get(url, allow_redirects=True, **kwargs)
+		print(f"[DEBUG] GET {url}", file=sys.stderr)
+		# Try with redirects first
+		resp = self.session.get(url, allow_redirects=True, **kwargs)
+		print(f"[DEBUG] GET {url} -> {resp.status_code} -> {resp.url}", file=sys.stderr)
+		
+		# If we got redirected to external domain, try without redirects and use the original URL
+		if resp.url and self.base_url not in resp.url and "ironclad.ofdecian" in resp.url:
+			print(f"[DEBUG] Redirected to external domain, retrying without redirects", file=sys.stderr)
+			resp = self.session.get(url, allow_redirects=False, **kwargs)
+			print(f"[DEBUG] GET {url} (no redirects) -> {resp.status_code}", file=sys.stderr)
+		
+		return resp
 
 	def _post(self, path: str, data: Dict[str, str], headers: Optional[Dict[str, str]] = None) -> requests.Response:
 		url = f"{self.base_url}/{path.lstrip('/')}"
+		print(f"[DEBUG] POST {url}", file=sys.stderr)
 		default_headers = {"content-type": "application/x-www-form-urlencoded"}
 		if headers:
 			default_headers.update(headers)
-		return self.session.post(url, data=data, headers=default_headers, allow_redirects=True)
+		resp = self.session.post(url, data=data, headers=default_headers, allow_redirects=True)
+		print(f"[DEBUG] POST {url} -> {resp.status_code} -> {resp.url}", file=sys.stderr)
+		
+		# If we got redirected to external domain, try without redirects and use the original URL
+		if resp.url and self.base_url not in resp.url and "ironclad.ofdecian" in resp.url:
+			print(f"[DEBUG] POST redirected to external domain, retrying without redirects", file=sys.stderr)
+			resp = self.session.post(url, data=data, headers=default_headers, allow_redirects=False)
+			print(f"[DEBUG] POST {url} (no redirects) -> {resp.status_code}", file=sys.stderr)
+		
+		return resp
 
 	@staticmethod
 	def _extract_csrf_fields(html: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:

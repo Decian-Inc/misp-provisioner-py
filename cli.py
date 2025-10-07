@@ -10,7 +10,7 @@ from misp_client import MispBrowserClient, MispAuth, get_auth_from_env, get_veri
 def parse_args() -> argparse.Namespace:
 	parser = argparse.ArgumentParser(description="MISP browser client CLI")
 	parser.add_argument("command", choices=["load-default-feeds", "feeds-count", "configure-feeds", "cache-feeds", "fetch-all-feeds", "provision-feeds"], help="Command to run")
-	parser.add_argument("--base-url", dest="base_url", default=os.environ.get("MISP_INTERNAL_BASE_URL"), help="MISP base URL (required)")
+	parser.add_argument("--base-url", dest="base_url", default=os.environ.get("MISP_BASE_URL"), help="MISP base URL (required)")
 	parser.add_argument("--debug", dest="debug", action="store_true", help="Enable verbose debug logging")
 	return parser.parse_args()
 
@@ -19,7 +19,7 @@ def main() -> int:
 	load_dotenv()
 	args = parse_args()
 	if not args.base_url:
-		print("MISP_INTERNAL_BASE_URL is required (via --base-url or env)", file=sys.stderr)
+		print("MISP_BASE_URL is required (via --base-url or env)", file=sys.stderr)
 		return 2
 	print(f"[DEBUG] Using base_url: {repr(args.base_url)}", file=sys.stderr)
 	client = MispBrowserClient(base_url=args.base_url, verify=get_verify_config_from_env())
