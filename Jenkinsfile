@@ -61,12 +61,7 @@ pipeline {
                    // display version info
                     echo "Current Version: ${majorVersion}.${minorVersion}.${patchVersion}"
 
-                    if (env.BRANCH_NAME == 'main' && !buildSkipped) {
-                        // Bump Patch Version, commit
-                        patchVersion = patchVersion.toInteger() + 1
-                        echo "New Version: ${majorVersion}.${minorVersion}.${patchVersion}"
-                        sh "echo ${majorVersion}.${minorVersion}.${patchVersion} > VERSION"
-                    }
+                    // Do not auto-bump semantic version; only the build number (main-X) should increment per commit
                     currentBuild.displayName = "# ${majorVersion}.${minorVersion}.${patchVersion}.${env.BUILD_NUMBER} | ${BRANCH_NAME}"
 
                 }
@@ -102,24 +97,7 @@ pipeline {
             }
         }
 
-        stage('Re-Commit Version Management') {
-            when {
-                expression { return !buildSkipped }
-            }
-            steps {
-                script {
-                    if (env.BRANCH_NAME == 'main') {
-                        sh "git add VERSION"
-                        sh "git commit -m '[skip ci] Update VERSION'"
-                        withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-github-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                            sh """
-                                GIT_SSH_COMMAND='ssh -i \$SSH_KEY' git push ${GIT_URL.replace('git@github.com:', 'git@github.com:')} HEAD:main
-                            """
-                        }
-                    }
-                }
-            }
-        }
+        // Removed auto-commit of VERSION; semantic version should change only via manual edits/PRs
 
 
     }

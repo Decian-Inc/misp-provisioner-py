@@ -52,10 +52,10 @@ def get_verify_config_from_env() -> Union[bool, str]:
 
 
 class MispBrowserClient:
-    def __init__(self, base_url: str, session: Optional[requests.Session] = None, verify: Optional[Union[bool, str]] = None):
-        if not base_url or not str(base_url).strip():
-            raise ValueError("MISP base_url is required")
-        self.base_url = base_url.rstrip("/")
+	def __init__(self, base_url: str, session: Optional[requests.Session] = None, verify: Optional[Union[bool, str]] = None):
+		if not base_url or not str(base_url).strip():
+			raise ValueError("MISP base_url is required")
+		self.base_url = base_url.rstrip("/")
 		self.session = session or requests.Session()
 		# Configure TLS verification from arg or env
 		if verify is None:
@@ -92,10 +92,10 @@ class MispBrowserClient:
 					print(f"[wait] attempt={attempt} status={resp.status_code}")
 				if resp.status_code == 200:
 					return True
-		except requests.RequestException as e:
-			if debug:
-				print(f"[wait] attempt={attempt} exception during request: {e.__class__.__name__}: {e}")
-			pass
+			except requests.RequestException as e:
+				if debug:
+					print(f"[wait] attempt={attempt} exception during request: {e.__class__.__name__}: {e}")
+				pass
 			time.sleep(interval_seconds)
 
 	def api_get_feeds(self, api_key: str, debug: bool = False) -> list:
