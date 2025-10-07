@@ -39,7 +39,6 @@ RUN groupadd -g ${GID} app \
     && useradd -m -u ${UID} -g ${GID} app
 USER app
 # Useful defaults; override at runtime
-ENV MISP_BASE_URL="" \
-    MISP_CERT_VALIDATION=true
+ENV MISP_CERT_VALIDATION=true
 ENTRYPOINT ["python", "/app/cli.py"]
 CMD ["--help"]

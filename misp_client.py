@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-DEFAULT_BASE_URL = "https://misp.ironclad.ofdecian"
+DEFAULT_BASE_URL = None  # No default; base_url must be provided explicitly
 
 
 @dataclass
@@ -52,8 +52,10 @@ def get_verify_config_from_env() -> Union[bool, str]:
 
 
 class MispBrowserClient:
-	def __init__(self, base_url: str = DEFAULT_BASE_URL, session: Optional[requests.Session] = None, verify: Optional[Union[bool, str]] = None):
-		self.base_url = base_url.rstrip("/")
+    def __init__(self, base_url: str, session: Optional[requests.Session] = None, verify: Optional[Union[bool, str]] = None):
+        if not base_url or not str(base_url).strip():
+            raise ValueError("MISP base_url is required")
+        self.base_url = base_url.rstrip("/")
 		self.session = session or requests.Session()
 		# Configure TLS verification from arg or env
 		if verify is None:
