@@ -20,7 +20,7 @@ cp env.sample .env
 
 - `MISP_USERNAME`: MISP username (email)
 - `MISP_PASSWORD`: MISP password
-- `MISP_BASE_URL` (optional): Defaults to `https://misp.ironclad.ofdecian`
+- `MISP_INTERNAL_BASE_URL` (optional): Defaults to `https://misp.ironclad.ofdecian`
  - `MISP_CERT_VALIDATION` (optional): `false` to disable TLS verification; defaults to `true`.
  - `MISP_CA_BUNDLE` (optional): Path to a custom CA bundle (PEM). Used when validation is enabled.
  - `MISP_CA_CERT` (optional): Alias for `MISP_CA_BUNDLE`.
@@ -54,7 +54,7 @@ Troubleshooting TLS:
 - Paths like `~` or `$HOME` are supported; they are expanded automatically.
 - We also set `REQUESTS_CA_BUNDLE` to the resolved path to maximize compatibility with underlying libraries.
 
-If `--base-url` is omitted, the value from `MISP_BASE_URL` or the built-in default is used.
+If `--base-url` is omitted, the value from `MISP_INTERNAL_BASE_URL` or the built-in default is used.
 
 ## Notes
 - The client fetches CSRF token fields from the login and Feeds pages and submits them with the POST, matching CakePHP SecurityComponent expectations.
