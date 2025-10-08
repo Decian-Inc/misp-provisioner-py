@@ -22,8 +22,17 @@ cp env.sample .env
 - `MISP_PASSWORD`: MISP password
 - `MISP_BASE_URL` (optional): Defaults to `https://misp.ironclad.ofdecian`
  - `MISP_CERT_VALIDATION` (optional): `false` to disable TLS verification; defaults to `true`.
- - `MISP_CA_BUNDLE` (optional): Path to a custom CA bundle (PEM). Used when validation is enabled.
- - `MISP_CA_CERT` (optional): Alias for `MISP_CA_BUNDLE`.
+- `MISP_CA_BUNDLE` (optional): Path to a custom CA bundle (PEM). Used when validation is enabled.
+- `MISP_CA_CERT` (optional): Can be either a filesystem path OR an inline PEM value.
+  - Inline example (escape newlines with `\\n` in `.env`):
+    ```
+    MISP_CA_CERT="-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----\n"
+    ```
+  - Path example:
+    ```
+    MISP_CA_CERT=/etc/ssl/certs/custom-ca.pem
+    ```
+  If an inline PEM is provided, it will be written to `/tmp/misp_ca_cert_from_env.pem` and used as the trust bundle.
  - `MISP_API_KEY` (optional): API key used for API commands (e.g., feeds count).
 
 ## Usage

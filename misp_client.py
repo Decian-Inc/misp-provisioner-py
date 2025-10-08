@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple, Union
 from os.path import expanduser, expandvars, isfile, abspath
@@ -39,16 +40,28 @@ def get_verify_config_from_env() -> Union[bool, str]:
 	"""
 	if not get_verify_from_env():
 		return False
-	ca_path = os.environ.get("MISP_CA_BUNDLE") or os.environ.get("MISP_CA_CERT")
-	if ca_path:
-		# Expand ~ and env vars; normalize to absolute path
-		resolved = abspath(expanduser(expandvars(ca_path)))
-		# Also set REQUESTS_CA_BUNDLE for libraries that read it implicitly
-		os.environ["REQUESTS_CA_BUNDLE"] = resolved
-		# If the file doesn't exist, surface a helpful error early
-		if not isfile(resolved):
-			raise RuntimeError(f"CA bundle not found at path: {resolved}")
-		return resolved
+    ca_value = os.environ.get("MISP_CA_BUNDLE") or os.environ.get("MISP_CA_CERT")
+    if ca_value:
+        text_val = str(ca_value).strip()
+        # Support inline PEM in env: detect BEGIN CERTIFICATE marker
+        if "-----BEGIN CERTIFICATE-----" in text_val or "-----BEGIN TRUSTED CERTIFICATE-----" in text_val:
+            # Allow \n sequences in .env to represent newlines
+            pem_text = text_val.replace("\\n", "\n")
+            # Persist to a temp file for requests to consume
+            tmp_path = "/tmp/misp_ca_cert_from_env.pem"
+            try:
+                with open(tmp_path, "w") as f:
+                    f.write(pem_text)
+            except Exception as e:
+                raise RuntimeError(f"Failed to write inline CA cert to {tmp_path}: {e}")
+            os.environ["REQUESTS_CA_BUNDLE"] = tmp_path
+            return tmp_path
+        # Otherwise treat as a filesystem path
+        resolved = abspath(expanduser(expandvars(text_val)))
+        os.environ["REQUESTS_CA_BUNDLE"] = resolved
+        if not isfile(resolved):
+            raise RuntimeError(f"CA bundle not found at path: {resolved}")
+        return resolved
 	return True
 
 
