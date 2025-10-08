@@ -383,6 +383,21 @@ class MispBrowserClient:
 			"data[User][password]": auth.password,
 		}
 		resp = self._post("users/login", data=form_data, headers={"origin": self.base_url, "referer": f"{self.base_url}/users/login"})
+		# If CSRF protection trips, refresh tokens and retry once
+		if resp.status_code >= 400 or ("cross-site request forgery protection" in resp.text.lower() or "csrf error" in resp.text.lower()):
+			print("[login] CSRF error detected, refreshing login page and retrying once", file=sys.stderr)
+			login_page2 = self._get("users/login")
+			if login_page2.status_code < 400:
+				key2, fields2, unlocked2 = self._extract_csrf_fields(login_page2.text)
+				form_data = {
+					"_method": "POST",
+					"data[_Token][key]": key2 or "",
+					"data[_Token][fields]": fields2 or "",
+					"data[_Token][unlocked]": unlocked2 or "",
+					"data[User][email]": auth.username,
+					"data[User][password]": auth.password,
+				}
+				resp = self._post("users/login", data=form_data, headers={"origin": self.base_url, "referer": f"{self.base_url}/users/login"})
 		if resp.status_code >= 400:
 			raise RuntimeError(f"Login POST failed: {resp.status_code}")
 		# Determine successful login by presence of logout link or redirect to dashboard
