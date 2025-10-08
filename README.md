@@ -22,7 +22,6 @@ cp env.sample .env
 - `MISP_PASSWORD`: MISP password
 - `MISP_BASE_URL` (optional): Defaults to `https://misp.ironclad.ofdecian`
  - `MISP_CERT_VALIDATION` (optional): `false` to disable TLS verification; defaults to `true`.
-- `MISP_CA_BUNDLE` (optional): Path to a custom CA bundle (PEM). Used when validation is enabled.
 - `MISP_CA_CERT` (optional): Can be either a filesystem path OR an inline PEM value.
   - Inline example (escape newlines with `\\n` in `.env`):
     ```
@@ -45,13 +44,6 @@ python cli.py load-default-feeds --base-url https://misp.ironclad.ofdecian
 ```
 
 To use a custom root CA:
-
-```bash
-export MISP_CA_BUNDLE=/etc/ssl/certs/my-root-ca.pem
-python cli.py load-default-feeds
-```
-
-You can also use the alias variable:
 
 ```bash
 export MISP_CA_CERT=/etc/ssl/certs/my-root-ca.pem

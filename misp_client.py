@@ -35,33 +35,32 @@ def get_verify_config_from_env() -> Union[bool, str]:
 
 	Order:
 	- if MISP_CERT_VALIDATION=false -> False
-	- elif MISP_CA_BUNDLE set -> that path (str)
 	- else -> True
 	"""
 	if not get_verify_from_env():
 		return False
-    ca_value = os.environ.get("MISP_CA_BUNDLE") or os.environ.get("MISP_CA_CERT")
-    if ca_value:
-        text_val = str(ca_value).strip()
-        # Support inline PEM in env: detect BEGIN CERTIFICATE marker
-        if "-----BEGIN CERTIFICATE-----" in text_val or "-----BEGIN TRUSTED CERTIFICATE-----" in text_val:
-            # Allow \n sequences in .env to represent newlines
-            pem_text = text_val.replace("\\n", "\n")
-            # Persist to a temp file for requests to consume
-            tmp_path = "/tmp/misp_ca_cert_from_env.pem"
-            try:
-                with open(tmp_path, "w") as f:
-                    f.write(pem_text)
-            except Exception as e:
-                raise RuntimeError(f"Failed to write inline CA cert to {tmp_path}: {e}")
-            os.environ["REQUESTS_CA_BUNDLE"] = tmp_path
-            return tmp_path
-        # Otherwise treat as a filesystem path
-        resolved = abspath(expanduser(expandvars(text_val)))
-        os.environ["REQUESTS_CA_BUNDLE"] = resolved
-        if not isfile(resolved):
-            raise RuntimeError(f"CA bundle not found at path: {resolved}")
-        return resolved
+	ca_value = os.environ.get("MISP_CA_CERT")
+	if ca_value:
+		text_val = str(ca_value).strip()
+		# Support inline PEM in env: detect BEGIN CERTIFICATE marker
+		if "-----BEGIN CERTIFICATE-----" in text_val or "-----BEGIN TRUSTED CERTIFICATE-----" in text_val:
+			# Allow \n sequences in .env to represent newlines
+			pem_text = text_val.replace("\\n", "\n")
+			# Persist to a temp file for requests to consume
+			tmp_path = "/tmp/misp_ca_cert_from_env.pem"
+			try:
+				with open(tmp_path, "w") as f:
+					f.write(pem_text)
+			except Exception as e:
+				raise RuntimeError(f"Failed to write inline CA cert to {tmp_path}: {e}")
+			os.environ["REQUESTS_CA_BUNDLE"] = tmp_path
+			return tmp_path
+		# Otherwise treat as a filesystem path
+		resolved = abspath(expanduser(expandvars(text_val)))
+		os.environ["REQUESTS_CA_BUNDLE"] = resolved
+		if not isfile(resolved):
+			raise RuntimeError(f"CA bundle not found at path: {resolved}")
+		return resolved
 	return True
 
 
@@ -321,6 +320,9 @@ class MispBrowserClient:
 	def _get(self, path: str, **kwargs) -> requests.Response:
 		url = f"{self.base_url}/{path.lstrip('/')}"
 		print(f"[DEBUG] GET {url}", file=sys.stderr)
+		# Ensure calls don't hang forever
+		if "timeout" not in kwargs:
+			kwargs["timeout"] = 30
 		# Try with redirects first
 		resp = self.session.get(url, allow_redirects=True, **kwargs)
 		print(f"[DEBUG] GET {url} -> {resp.status_code} -> {resp.url}", file=sys.stderr)
@@ -339,7 +341,8 @@ class MispBrowserClient:
 		default_headers = {"content-type": "application/x-www-form-urlencoded"}
 		if headers:
 			default_headers.update(headers)
-		resp = self.session.post(url, data=data, headers=default_headers, allow_redirects=True)
+		# Ensure calls don't hang forever
+		resp = self.session.post(url, data=data, headers=default_headers, allow_redirects=True, timeout=30)
 		print(f"[DEBUG] POST {url} -> {resp.status_code} -> {resp.url}", file=sys.stderr)
 		
 		# If we got redirected to external domain, try without redirects and use the original URL
